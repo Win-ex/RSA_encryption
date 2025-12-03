@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>RSA Logs - Activity History</title>
+<style>
+:root{
+  --bg:#0d1117;
+  --card:#161b22;
+  --panel:#1c2128;
+  --muted:#c9d1d9;
+  --accent:#58a6ff;
+  --border:#30363d;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html,body{
+  height:100%;
+  font-family:'Segoe UI',Arial,sans-serif;
+  background:var(--bg);
+  color:var(--muted);
+  overflow-x:hidden;
+}
+
+@keyframes fadeIn {
+  from { opacity:0; transform:translateY(20px); }
+  to { opacity:1; transform:translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity:0; transform:translateX(-30px); }
+  to { opacity:1; transform:translateX(0); }
+}
+
+.nav{
+  background:var(--card);
+  border-bottom:1px solid var(--border);
+  padding:16px 24px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  box-shadow:0 4px 12px rgba(0,0,0,0.3);
+  animation:slideIn 0.5s ease;
+}
+
+.nav-title{
+  font-size:20px;
+  font-weight:700;
+  color:var(--accent);
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.nav-links{
+  display:flex;
+  gap:12px;
+}
+
+.nav-btn{
+  padding:8px 16px;
+  background:transparent;
+  color:var(--muted);
+  border:1px solid var(--border);
+  border-radius:6px;
+  cursor:pointer;
+  font-size:14px;
+  font-weight:600;
+  transition:all 0.3s ease;
+  text-decoration:none;
+  display:inline-block;
+}
+
+.nav-btn:hover{
+  background:var(--accent);
+  color:#071023;
+  border-color:var(--accent);
+  transform:translateY(-2px);
+  box-shadow:0 4px 12px rgba(88,166,255,0.3);
+}
+
+.nav-btn.active{
+  background:var(--accent);
+  color:#071023;
+  border-color:var(--accent);
+}
+
+.wrap{
+  min-height:calc(100vh - 65px);
+  padding:32px 24px;
+  display:flex;
+  justify-content:center;
+}
+
+.container{
+  width:100%;
+  max-width:1200px;
+  animation:fadeIn 0.6s ease;
+}
+
+.section{
+  background:var(--card);
+  border-radius:12px;
+  padding:24px;
+  margin-bottom:24px;
+  border:1px solid var(--border);
+  box-shadow:0 8px 24px rgba(0,0,0,0.4);
+  animation:fadeIn 0.8s ease;
+  transition:transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.section:hover{
+  transform:translateY(-4px);
+  box-shadow:0 12px 32px rgba(0,0,0,0.5);
+}
+
+h2{
+  color:var(--accent);
+  font-size:18px;
+  margin-bottom:16px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.btn{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 18px;
+  border-radius:8px;
+  border:none;
+  cursor:pointer;
+  font-weight:600;
+  font-size:14px;
+  transition:all 0.3s ease;
+  position:relative;
+  overflow:hidden;
+}
+
+.btn::before{
+  content:'';
+  position:absolute;
+  top:50%;
+  left:50%;
+  width:0;
+  height:0;
+  border-radius:50%;
+  background:rgba(255,255,255,0.2);
+  transform:translate(-50%,-50%);
+  transition:width 0.6s, height 0.6s;
+}
+
+.btn:hover::before{
+  width:300px;
+  height:300px;
+}
+
+.btn:active{
+  transform:scale(0.95);
+}
+
+.btn-ghost{
+  background:transparent;
+  color:var(--muted);
+  border:1px solid var(--border);
+}
+
+.btn-ghost:hover{
+  background:var(--panel);
+  border-color:var(--muted);
+}
+
+.btn-danger{
+  background:#f85149;
+  color:#fff;
+}
+
+.btn-danger:hover{
+  background:#d93636;
+  box-shadow:0 6px 20px rgba(248,81,73,0.4);
+}
+
+.btn-group{
+  display:flex;
+  gap:10px;
+  margin-bottom:20px;
+  flex-wrap:wrap;
+}
+
+.logs-container{
+  max-height:600px;
+  overflow-y:auto;
+  background:#0b0f13;
+  border-radius:8px;
+  border:1px solid var(--border);
+  padding:12px;
+}
+
+.logs-container::-webkit-scrollbar{
+  width:8px;
+}
+
+.logs-container::-webkit-scrollbar-track{
+  background:var(--panel);
+  border-radius:4px;
+}
+
+.logs-container::-webkit-scrollbar-thumb{
+  background:var(--border);
+  border-radius:4px;
+}
+
+.logs-container::-webkit-scrollbar-thumb:hover{
+  background:var(--muted);
+}
+
+.log-item{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:16px;
+  margin-bottom:12px;
+  transition:all 0.3s ease;
+  animation:fadeIn 0.5s ease;
+}
+
+.log-item:hover{
+  border-color:var(--accent);
+  transform:translateX(4px);
+  box-shadow:0 4px 12px rgba(88,166,255,0.15);
+}
+
+.log-timestamp{
+  color:var(--accent);
+  font-weight:700;
+  font-size:14px;
+  margin-bottom:8px;
+}
+
+.log-action{
+  font-weight:600;
+  margin-bottom:8px;
+  font-size:15px;
+}
+
+.log-details{
+  font-size:12px;
+  color:#8b949e;
+  line-height:1.6;
+  word-break:break-all;
+}
+
+.log-detail-item{
+  margin-top:4px;
+}
+
+.empty-state{
+  padding:60px 20px;
+  text-align:center;
+  color:#6b7280;
+}
+
+.empty-state-icon{
+  font-size:64px;
+  margin-bottom:16px;
+  opacity:0.3;
+}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:16px;
+  margin-bottom:24px;
+}
+
+.stat-card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:16px;
+  text-align:center;
+  transition:all 0.3s ease;
+}
+
+.stat-card:hover{
+  border-color:var(--accent);
+  transform:translateY(-2px);
+}
+
+.stat-value{
+  font-size:32px;
+  font-weight:700;
+  color:var(--accent);
+  margin-bottom:4px;
+}
+
+.stat-label{
+  font-size:13px;
+  color:#8b949e;
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+}
+
+@media (max-width:768px){
+  .nav{
+    flex-direction:column;
+    gap:12px;
+  }
+  .stats{
+    grid-template-columns:1fr;
+  }
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-title">
+    RSA Encryption System
+  </div>
+  <div class="nav-links">
+    <a href="#" class="nav-btn" onclick="navigateTo('encrypt')">Encrypt</a>
+    <a href="#" class="nav-btn" onclick="navigateTo('decrypt')">Decrypt</a>
+    <a href="#" class="nav-btn active" onclick="return false;">Logs</a>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="container">
+    
+    <div class="section">
+      <h2>Statistics</h2>
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-value" id="totalLogs">0</div>
+          <div class="stat-label">Total Activities</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="totalKeys">0</div>
+          <div class="stat-label">Keys Generated</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="totalEncrypt">0</div>
+          <div class="stat-label">Encryptions</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="totalDecrypt">0</div>
+          <div class="stat-label">Decryptions</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Activity Logs</h2>
+      
+      <div class="btn-group">
+        <button class="btn btn-ghost" onclick="refreshLogs()">
+          Refresh
+        </button>
+        <button class="btn btn-ghost" onclick="downloadLogs()">
+          Download (.txt)
+        </button>
+        <button class="btn btn-danger" onclick="clearLogs()">
+          Clear All
+        </button>
+      </div>
+
+      <div id="logsContainer" class="logs-container">
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const LOG_KEY = 'rsa_uas_logs_v2';
+
+function navigateTo(page) {
+  window.location.href = page === 'encrypt' ? 'encrypt.html' : (page === 'decrypt' ? 'decrypt.html' : 'logs.html');
+}
+
+function loadLogs(){ 
+  try{ 
+    return JSON.parse(localStorage.getItem(LOG_KEY) || '[]'); 
+  } catch(e){ 
+    return []; 
+  } 
+}
+
+function updateStats(){
+  const logs = loadLogs();
+  
+  document.getElementById('totalLogs').textContent = logs.length;
+  document.getElementById('totalKeys').textContent = logs.filter(l => l.action === 'generate_keys').length;
+  document.getElementById('totalEncrypt').textContent = logs.filter(l => l.action === 'encrypt').length;
+  document.getElementById('totalDecrypt').textContent = logs.filter(l => l.action === 'decrypt').length;
+}
+
+function truncateKey(key, maxLength = 60) {
+  if (key.length <= maxLength) return key;
+  return key.substring(0, maxLength) + '...';
+}
+
+function showLogs(){
+  const container = document.getElementById('logsContainer');
+  const logs = loadLogs();
+  
+  container.innerHTML = '';
+  
+  if (!logs.length) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">...</div>
+        <div style="font-size:16px;font-weight:600;margin-bottom:8px;">No Activity Yet</div>
+        <div style="font-size:14px;">Start by generating keys and encrypting data</div>
+      </div>
+    `;
+    return;
+  }
+  
+  for (const log of logs) {
+    const item = document.createElement('div');
+    item.className = 'log-item';
+    
+    const timestamp = document.createElement('div');
+    timestamp.className = 'log-timestamp';
+    timestamp.textContent = log.ts;
+    
+    const action = document.createElement('div');
+    action.className = 'log-action';
+    
+    const details = document.createElement('div');
+    details.className = 'log-details';
+    
+    if (log.action === 'generate_keys') {
+      action.innerHTML = '<span style="color:#2ea043;">✓ Generate RSA Keys</span>';
+      details.innerHTML = `
+        <div class="log-detail-item"><strong>Key Size:</strong> ${log.keySize || '1024-bit'}</div>
+        <div class="log-detail-item"><strong>Public Key:</strong> ${truncateKey(log.publicKey || 'N/A')}</div>
+      `;
+    }
+    else if (log.action === 'encrypt') {
+      action.innerHTML = '<span style="color:#58a6ff;">Encrypt Data</span>';
+      details.innerHTML = `
+        <div class="log-detail-item"><strong>Public Key:</strong> ${truncateKey(log.publicKey || 'N/A')}</div>
+        <div class="log-detail-item"><strong>SHA-256 Hash:</strong> ${log.hash || 'N/A'}</div>
+        <div class="log-detail-item"><strong>Plaintext Length:</strong> ${log.plaintextLength || 0} characters</div>
+        <div class="log-detail-item"><strong>Ciphertext Length:</strong> ${log.cipherLength || 0} characters</div>
+      `;
+    }
+    else if (log.action === 'decrypt') {
+      const verified = log.hashVerified;
+      const statusColor = verified ? '#2ea043' : '#f85149';
+      const statusIcon = verified ? '✓' : '✗';
+      
+      action.innerHTML = '<span style="color:#a371f7;">Decrypt Data</span>';
+      details.innerHTML = `
+        <div class="log-detail-item"><strong>Private Key:</strong> ${truncateKey(log.privateKey || 'N/A')}</div>
+        <div class="log-detail-item"><strong>SHA-256 Hash:</strong> ${log.hash || 'N/A'}</div>
+        <div class="log-detail-item"><strong>Plaintext Length:</strong> ${log.plaintextLength || 0} characters</div>
+        <div class="log-detail-item" style="color:${statusColor};font-weight:600;margin-top:8px;">
+          ${statusIcon} Hash Verified: ${verified ? 'TRUE' : 'FALSE'}
+        </div>
+        <div class="log-detail-item" style="color:${statusColor};">
+          Integrity Status: ${verified ? 'PASSED' : 'FAILED'}
+        </div>
+      `;
+    }
+    
+    item.appendChild(timestamp);
+    item.appendChild(action);
+    item.appendChild(details);
+    container.appendChild(item);
+  }
+}
+
+function refreshLogs(){
+  showLogs();
+  updateStats();
+}
+
+function clearLogs(){
+  if (!confirm('Hapus semua activity logs?\n\nTindakan ini tidak dapat dibatalkan.')) {
+    return;
+  }
+  
+  localStorage.removeItem(LOG_KEY);
+  refreshLogs();
+  alert('Logs berhasil dihapus');
+}
+
+function downloadLogs(){
+  const logs = loadLogs();
+  
+  if (!logs.length) {
+    alert('Tidak ada logs untuk didownload');
+    return;
+  }
+  
+  const lines = [];
+  lines.push('='.repeat(80));
+  lines.push('RSA ENCRYPTION SYSTEM - ACTIVITY LOGS');
+  lines.push('Generated: ' + new Date().toLocaleString('id-ID'));
+  lines.push('='.repeat(80));
+  lines.push('');
+  
+  for (const log of logs) {
+    lines.push('-'.repeat(80));
+    lines.push(`TIMESTAMP: ${log.ts}`);
+    
+    if (log.action === 'generate_keys') {
+      lines.push(`ACTION: Generate RSA Keys`);
+      lines.push(`KEY SIZE: ${log.keySize || '1024-bit'}`);
+      lines.push(`PUBLIC KEY: ${log.publicKey || 'N/A'}`);
+    }
+    else if (log.action === 'encrypt') {
+      lines.push(`ACTION: Encrypt Data`);
+      lines.push(`PUBLIC KEY: ${log.publicKey || 'N/A'}`);
+      lines.push(`SHA-256 HASH: ${log.hash || 'N/A'}`);
+      lines.push(`PLAINTEXT LENGTH: ${log.plaintextLength || 0} characters`);
+      lines.push(`CIPHERTEXT LENGTH: ${log.cipherLength || 0} characters`);
+    }
+    else if (log.action === 'decrypt') {
+      lines.push(`ACTION: Decrypt Data`);
+      lines.push(`PRIVATE KEY: ${log.privateKey || 'N/A'}`);
+      lines.push(`SHA-256 HASH RECOMPUTED: ${log.hash || 'N/A'}`);
+      lines.push(`PLAINTEXT LENGTH: ${log.plaintextLength || 0} characters`);
+      lines.push(`HASH VERIFIED: ${log.hashVerified ? 'TRUE' : 'FALSE'}`);
+      lines.push(`INTEGRITY STATUS: ${log.hashVerified ? 'PASSED' : 'FAILED'}`);
+    }
+    
+    lines.push('');
+  }
+  
+  lines.push('='.repeat(80));
+  lines.push(`SUMMARY STATISTICS`);
+  lines.push(`TOTAL LOGS: ${logs.length}`);
+  lines.push(`KEYS GENERATED: ${logs.filter(l => l.action === 'generate_keys').length}`);
+  lines.push(`ENCRYPTIONS: ${logs.filter(l => l.action === 'encrypt').length}`);
+  lines.push(`DECRYPTIONS: ${logs.filter(l => l.action === 'decrypt').length}`);
+  lines.push('='.repeat(80));
+  
+  const content = lines.join('\n');
+  const blob = new Blob([content], {type:'text/plain;charset=utf-8'}); 
+  const url = URL.createObjectURL(blob); 
+  const a = document.createElement('a'); 
+  a.href = url; 
+  
+  const now = new Date();
+  const filename = `RSA_Logs_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}.txt`;
+  
+  a.download = filename; 
+  a.click(); 
+  URL.revokeObjectURL(url);
+  alert('✓ Logs berhasil didownload!');
+}
+
+refreshLogs();
+
+</script>
+</body>
+</html>

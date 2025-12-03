@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>RSA Decrypt - Dekripsi Data</title>
+<style>
+:root{
+  --bg:#0d1117;
+  --card:#161b22;
+  --panel:#1c2128;
+  --muted:#c9d1d9;
+  --accent:#58a6ff;
+  --accent2:#2ea043;
+  --border:#30363d;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html,body{
+  height:100%;
+  font-family:'Segoe UI',Arial,sans-serif;
+  background:var(--bg);
+  color:var(--muted);
+  overflow-x:hidden;
+}
+
+@keyframes fadeIn {
+  from { opacity:0; transform:translateY(20px); }
+  to { opacity:1; transform:translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity:0; transform:translateX(-30px); }
+  to { opacity:1; transform:translateX(0); }
+}
+
+@keyframes spin {
+  from { transform:rotate(0deg); }
+  to { transform:rotate(360deg); }
+}
+
+.nav{
+  background:var(--card);
+  border-bottom:1px solid var(--border);
+  padding:16px 24px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  box-shadow:0 4px 12px rgba(0,0,0,0.3);
+  animation:slideIn 0.5s ease;
+}
+
+.nav-title{
+  font-size:20px;
+  font-weight:700;
+  color:var(--accent);
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.nav-links{
+  display:flex;
+  gap:12px;
+}
+
+.nav-btn{
+  padding:8px 16px;
+  background:transparent;
+  color:var(--muted);
+  border:1px solid var(--border);
+  border-radius:6px;
+  cursor:pointer;
+  font-size:14px;
+  font-weight:600;
+  transition:all 0.3s ease;
+  text-decoration:none;
+  display:inline-block;
+}
+
+.nav-btn:hover{
+  background:var(--accent);
+  color:#071023;
+  border-color:var(--accent);
+  transform:translateY(-2px);
+  box-shadow:0 4px 12px rgba(88,166,255,0.3);
+}
+
+.nav-btn.active{
+  background:var(--accent);
+  color:#071023;
+  border-color:var(--accent);
+}
+
+.wrap{
+  min-height:calc(100vh - 65px);
+  padding:32px 24px;
+  display:flex;
+  justify-content:center;
+}
+
+.container{
+  width:100%;
+  max-width:1000px;
+  animation:fadeIn 0.6s ease;
+}
+
+.section{
+  background:var(--card);
+  border-radius:12px;
+  padding:24px;
+  margin-bottom:24px;
+  border:1px solid var(--border);
+  box-shadow:0 8px 24px rgba(0,0,0,0.4);
+  animation:fadeIn 0.8s ease;
+  transition:transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.section:hover{
+  transform:translateY(-4px);
+  box-shadow:0 12px 32px rgba(0,0,0,0.5);
+}
+
+h2{
+  color:var(--accent);
+  font-size:18px;
+  margin-bottom:16px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+label{
+  display:block;
+  font-weight:600;
+  margin-bottom:8px;
+  color:#cbd5e1;
+  font-size:13px;
+}
+
+textarea{
+  width:100%;
+  padding:12px;
+  border-radius:8px;
+  background:#0b0f13;
+  color:#e6edf3;
+  border:1px solid var(--border);
+  font-size:14px;
+  font-family:'Courier New',monospace;
+  min-height:140px;
+  resize:vertical;
+  transition:border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+textarea:focus{
+  outline:none;
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(88,166,255,0.1);
+}
+
+.btn{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 18px;
+  border-radius:8px;
+  border:none;
+  cursor:pointer;
+  font-weight:600;
+  font-size:14px;
+  transition:all 0.3s ease;
+  position:relative;
+  overflow:hidden;
+}
+
+.btn::before{
+  content:'';
+  position:absolute;
+  top:50%;
+  left:50%;
+  width:0;
+  height:0;
+  border-radius:50%;
+  background:rgba(255,255,255,0.2);
+  transform:translate(-50%,-50%);
+  transition:width 0.6s, height 0.6s;
+}
+
+.btn:hover::before{
+  width:300px;
+  height:300px;
+}
+
+.btn:active{
+  transform:scale(0.95);
+}
+
+.btn-primary{
+  background:var(--accent);
+  color:#071023;
+}
+
+.btn-primary:hover{
+  background:#4a8fd9;
+  box-shadow:0 6px 20px rgba(88,166,255,0.4);
+  transform:translateY(-2px);
+}
+
+.btn-ghost{
+  background:transparent;
+  color:var(--muted);
+  border:1px solid var(--border);
+}
+
+.btn-ghost:hover{
+  background:var(--panel);
+  border-color:var(--muted);
+}
+
+.btn:disabled{
+  opacity:0.5;
+  cursor:not-allowed;
+  transform:none !important;
+}
+
+.btn-group{
+  display:flex;
+  gap:10px;
+  margin-top:12px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+.spinner{
+  display:inline-block;
+  width:16px;
+  height:16px;
+  border:2px solid rgba(255,255,255,0.3);
+  border-top-color:#fff;
+  border-radius:50%;
+  animation:spin 0.8s linear infinite;
+}
+
+.hash-status{
+  font-size:13px;
+  font-weight:600;
+  padding:6px 12px;
+  border-radius:6px;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+}
+
+.hash-verified-true{
+  background:rgba(46,160,67,0.15);
+  color:#2ea043;
+  border:1px solid rgba(46,160,67,0.3);
+}
+
+.hash-verified-false{
+  background:rgba(248,81,73,0.15);
+  color:#f85149;
+  border:1px solid rgba(248,81,73,0.3);
+}
+
+.hash-verified-unknown{
+  background:rgba(139,148,158,0.15);
+  color:#8b949e;
+  border:1px solid rgba(139,148,158,0.3);
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px;
+}
+
+.key-input{
+  margin-bottom:20px;
+}
+
+@media (max-width:768px){
+  .grid{
+    grid-template-columns:1fr;
+  }
+  .nav{
+    flex-direction:column;
+    gap:12px;
+  }
+}
+</style>
+</head>
+<body onload="loadPageState()">
+
+<nav class="nav">
+  <div class="nav-title">
+    🔐 RSA Encryption System
+  </div>
+  <div class="nav-links">
+    <a href="encrypt.html" class="nav-btn">Encrypt</a>
+    <a href="decrypt.html" class="nav-btn active">Decrypt</a>
+    <a href="log.html" class="nav-btn">Logs</a>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="container">
+    
+    <!-- Private Key Input -->
+    <div class="section">
+      <h2> Private Key</h2>
+      <div class="key-input">
+        <label>Paste your Private Key (d, n)</label>
+        <textarea id="privateKey" rows="3" placeholder='["d","n"]'></textarea>
+      </div>
+    </div>
+
+    <!-- Decrypt Section -->
+    <div class="section">
+      <h2> Dekripsi Data</h2>
+      <div class="grid">
+        <div>
+          <label>Cipher Text</label>
+          <textarea id="cipherText" placeholder="Paste cipher text di sini..."></textarea>
+          <div class="btn-group">
+            <button class="btn btn-ghost" onclick="clearField('cipherText')">Clear</button>
+            <button class="btn btn-ghost" onclick="pasteFromClipboard()"> Paste</button>
+          </div>
+        </div>
+
+        <div>
+          <label>Decrypted Text</label>
+          <textarea id="decryptedText" placeholder="Hasil dekripsi akan muncul di sini..." readonly></textarea>
+          <div class="btn-group">
+            <button class="btn btn-ghost" onclick="clearField('decryptedText')">Clear</button>
+            <button class="btn btn-ghost" onclick="copyToClipboard('decryptedText')"> Copy</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <button class="btn btn-primary" id="btnDecrypt"> Decrypt </button>
+        <div id="hashStatus" class="hash-status hash-verified-unknown">
+           Hash Status: Unknown
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ============ CRYPTO UTILITIES ============ */
+
+const STORAGE_PREFIX = 'rsa_app_';
+
+function saveToStorage(key, value) {
+  try {
+    localStorage.setItem(STORAGE_PREFIX + key, value);
+  } catch(e) {
+    console.error('Storage error:', e);
+  }
+}
+
+function loadFromStorage(key) {
+  try {
+    return localStorage.getItem(STORAGE_PREFIX + key) || '';
+  } catch(e) {
+    return '';
+  }
+}
+
+function savePageState() {
+  const fields = document.querySelectorAll("textarea, input[type='text']");
+  fields.forEach(f => {
+    if (f.id && f.id.trim() !== '') {
+      saveToStorage(f.id, f.value);
+    }
+  });
+}
+
+function loadPageState() {
+  const fields = document.querySelectorAll("textarea, input[type='text']");
+  fields.forEach(f => {
+    if (f.id && f.id.trim() !== '') {
+      f.value = loadFromStorage(f.id);
+    }
+  });
+}
+
+function clearStoredText() {
+  const fields = document.querySelectorAll("textarea, input[type='text']");
+  fields.forEach(f => {
+    if (f.id && f.id.trim() !== '') {
+      saveToStorage(f.id, "");   
+      f.value = "";              
+    }
+  });
+}
+
+function navigateTo(page) {
+  savePageState();
+  window.location.href =
+    page === 'encrypt'
+      ? 'encrypt.html'
+      : page === 'decrypt'
+      ? 'decrypt.html'
+      : 'logs.html';
+}
+
+
+function nowTimestamp() {
+  const d = new Date();
+  const YYYY = d.getFullYear();
+  const MM = String(d.getMonth()+1).padStart(2,'0');
+  const DD = String(d.getDate()).padStart(2,'0');
+  const hh = String(d.getHours()).padStart(2,'0');
+  const mm = String(d.getMinutes()).padStart(2,'0');
+  const ss = String(d.getSeconds()).padStart(2,'0');
+  return `${YYYY}-${MM}-${DD} ${hh}:${mm}:${ss}`;
+}
+
+async function sha256BytesFromText(text){
+  const data = new TextEncoder().encode(text);
+  const buf = await crypto.subtle.digest('SHA-256', data);
+  return new Uint8Array(buf);
+}
+
+function bytesToHex(uint8arr){ 
+  return Array.from(uint8arr).map(b=>b.toString(16).padStart(2,'0')).join(''); 
+}
+
+function modPow(base, exp, mod){
+  base = base % mod;
+  let result = 1n;
+  while (exp > 0n){
+    if (exp & 1n) result = (result * base) % mod;
+    base = (base * base) % mod;
+    exp >>= 1n;
+  }
+  return result;
+}
+
+function bitLength(n){ 
+  return n.toString(2).length; 
+}
+
+function bytesToBigInt(byteArray) {
+  let result = 0n;
+  for (let i = 0; i < byteArray.length; i++) {
+    result = (result << 8n) | BigInt(byteArray[i]);
+  }
+  return result;
+}
+
+function bigIntToBytes(bigint) {
+  if (bigint === 0n) return [0];
+  const bytes = [];
+  let temp = bigint;
+  while (temp > 0n) {
+    bytes.unshift(Number(temp & 0xFFn));
+    temp = temp >> 8n;
+  }
+  return bytes;
+}
+
+function parseKeyField(id){
+  const v = document.getElementById(id).value.trim();
+  if (!v) throw new Error('Key kosong');
+  try {
+    const arr = JSON.parse(v);
+    if (!Array.isArray(arr) || arr.length < 2) throw new Error('Format key invalid');
+    return [BigInt(arr[0]), BigInt(arr[1])];
+  } catch(e) {
+    const parts = v.replace(/[\[\]\s]/g,'').split(',');
+    if (parts.length < 2) throw new Error('Key tidak valid');
+    return [BigInt(parts[0]), BigInt(parts[1])];
+  }
+}
+
+function base64DecodeUnicode(b64){
+  const binary = atob(b64);
+  const len = binary.length;
+  const bytes = new Uint8Array(len);
+  for (let i=0;i<len;i++) bytes[i] = binary.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
+
+/* ============ LOGGING ============ */
+
+const LOG_KEY = 'rsa_uas_logs_v2';
+
+function saveLog(obj){ 
+  try{ 
+    const arr = JSON.parse(localStorage.getItem(LOG_KEY) || '[]');
+    arr.unshift(obj); 
+    if (arr.length > 100) arr.length = 100;
+    localStorage.setItem(LOG_KEY, JSON.stringify(arr)); 
+  } catch(e){ 
+    console.error('Save log error:', e); 
+  } 
+}
+
+/* DECRYPT FUNCTION */
+
+async function decryptText(){
+  const btnDecrypt = document.getElementById('btnDecrypt');
+  const icon = document.getElementById('decryptIcon');
+  const statusEl = document.getElementById('hashStatus');
+  
+  try {
+    const [d, n] = parseKeyField('privateKey');
+    const cipherRaw = (document.getElementById('cipherText').value || '').trim();
+    if (!cipherRaw){ alert('Masukkan cipher text!'); return; }
+
+    btnDecrypt.disabled = true;
+    icon.innerHTML = '<span class="spinner"></span>';
+    statusEl.className = 'hash-status hash-verified-unknown';
+    statusEl.innerHTML = '⏳ Decrypting...';
+
+    const parts = cipherRaw.split('|||');
+    if (parts.length !== 3) {
+      throw new Error('Format cipher invalid: Expected 3 parts separated by |||');
+    }
+
+    const metaB64 = parts[0].trim();
+    const hashBlocksStr = parts[1].trim();
+    const plainBlocksStr = parts[2].trim();
+
+    let meta;
+    try {
+      const metaJson = base64DecodeUnicode(metaB64);
+      meta = JSON.parse(metaJson);
+      
+      if (!meta.hashLen || !meta.plainLen || !meta.blockSize) {
+        throw new Error('Metadata incomplete');
+      }
+    } catch(metaError) {
+      document.getElementById('decryptedText').value = '[ERROR] Cipher text corrupted - metadata invalid';
+      statusEl.className = 'hash-status hash-verified-false';
+      statusEl.innerHTML = '❌ Metadata Corrupted';
+      alert(' Cipher text corrupted! Metadata cannot be decoded.');
+      return;
+    }
+
+    const hashBlocks = hashBlocksStr.split('|').filter(Boolean);
+    const plainBlocks = plainBlocksStr.split('|').filter(Boolean);
+
+    let allHashBytes = [];
+    try {
+      for (const block of hashBlocks) {
+        try {
+          const c = BigInt(block);
+          const m = modPow(c, d, n);
+          const bytes = bigIntToBytes(m);
+          allHashBytes.push(...bytes);
+        } catch(blockError) {
+          allHashBytes.push(0);
+        }
+        await new Promise(r => setTimeout(r, 0));
+      }
+    } catch(err) {
+      console.error('Hash decryption failed:', err);
+    }
+
+    const decryptedHashBytes = allHashBytes.slice(0, meta.hashLen);
+
+    let allPlainBytes = [];
+    let decryptionFailed = false;
+    
+    try {
+      for (const block of plainBlocks) {
+        try {
+          const c = BigInt(block);
+          const m = modPow(c, d, n);
+          const bytes = bigIntToBytes(m);
+          allPlainBytes.push(...bytes);
+        } catch(blockError) {
+          decryptionFailed = true;
+          allPlainBytes.push(0);
+        }
+        await new Promise(r => setTimeout(r, 0));
+      }
+    } catch(err) {
+      decryptionFailed = true;
+    }
+
+    const decryptedPlainBytes = allPlainBytes.slice(0, meta.plainLen);
+    
+    let plainText;
+    try {
+      plainText = new TextDecoder('utf-8', { fatal: false }).decode(new Uint8Array(decryptedPlainBytes));
+      
+      const replacementCount = (plainText.match(/�/g) || []).length;
+      if (replacementCount > plainText.length * 0.3) {
+        plainText = '[CORRUPTED] Decryption produced invalid characters:\n' + plainText;
+      }
+    } catch(decodeError) {
+      plainText = '[ERROR] Cannot decode decrypted bytes to text';
+    }
+
+    let verified = false;
+    let recomputedHashHex = '';
+    
+    try {
+      const recomputedHash = await sha256BytesFromText(plainText);
+      const decryptedHashHex = bytesToHex(new Uint8Array(decryptedHashBytes));
+      recomputedHashHex = bytesToHex(recomputedHash);
+      verified = decryptedHashHex === recomputedHashHex;
+    } catch(hashError) {
+      verified = false;
+    }
+
+    document.getElementById('decryptedText').value = plainText;
+    
+    if (decryptionFailed) {
+      statusEl.className = 'hash-status hash-verified-false';
+      statusEl.innerHTML = ' Decryption Failed';
+    } else if (verified) {
+      statusEl.className = 'hash-status hash-verified-true';
+      statusEl.innerHTML = ' Hash Verified: TRUE';
+    } else {
+      statusEl.className = 'hash-status hash-verified-false';
+      statusEl.innerHTML = ' Hash Verified: FALSE';
+    }
+
+    saveLog({ 
+      ts: nowTimestamp(), 
+      action: 'decrypt',
+      hash: recomputedHashHex,
+      hashVerified: verified
+    });
+
+    icon.textContent = verified ? '✓' : '⚠️';
+    setTimeout(() => { icon.textContent = '🔓'; }, 2000);
+
+    if (verified) {
+      alert(' Dekripsi berhasil! Hash verified: TRUE');
+    } else if (decryptionFailed) {
+      alert(' Cipher text corrupted! Some blocks cannot be decrypted.');
+    } else {
+      alert(' Hash mismatch! Data integrity failed.');
+    }
+
+  } catch(err){
+    console.error('Decrypt error:', err);
+    document.getElementById('decryptedText').value = `[FATAL ERROR]\n${err.message}\n\nCipher text may be severely corrupted or invalid.`;
+    statusEl.className = 'hash-status hash-verified-false';
+    statusEl.innerHTML = '❌ Fatal Error';
+    icon.textContent = '❌';
+    setTimeout(() => { icon.textContent = '🔓'; }, 2000);
+    alert('❌ Decrypt error: ' + err.message);
+  } finally {
+    btnDecrypt.disabled = false;
+  }
+}
+
+/* ============ UI HELPERS ============ */
+
+function copyToClipboard(id){
+  const v = document.getElementById(id).value;
+  if(!v) { alert('Tidak ada yang disalin'); return; }
+  navigator.clipboard.writeText(v).then(()=>alert('✓ Copied!')).catch(()=>alert('Gagal menyalin'));
+}
+
+async function pasteFromClipboard(){
+  try {
+    const text = await navigator.clipboard.readText();
+    document.getElementById('cipherText').value = text;
+    alert('✓ Pasted from clipboard!');
+  } catch(err) {
+    alert('Gagal paste. Gunakan Ctrl+V secara manual.');
+  }
+}
+
+function clearField(id){ 
+  document.getElementById(id).value = ''; 
+}
+
+/* ============ EVENT LISTENERS ============ */
+
+document.getElementById('btnDecrypt').addEventListener('click', decryptText);
+
+</script>
+</body>
+</html>
